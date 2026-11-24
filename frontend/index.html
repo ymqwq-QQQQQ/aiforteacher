@@ -1,0 +1,1608 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>aiforteachers — Intelligent Courseware</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'] }
+        }
+      }
+    };
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .prose-body h2 { font-size: 1.15rem; font-weight: 700; margin: 0.9rem 0 0.4rem; }
+    .prose-body h3 { font-size: 1rem; font-weight: 600; margin: 0.75rem 0 0.3rem; }
+    .prose-body ul { list-style: disc; padding-left: 1.25rem; margin: 0.35rem 0; }
+    .prose-body li { margin: 0.2rem 0; }
+    .prose-body p { margin: 0.4rem 0; line-height: 1.6; }
+    .prose-body blockquote { border-left: 3px solid #3b82f6; padding-left: 0.75rem; opacity: 0.85; margin: 0.4rem 0; }
+    .thin-scroll::-webkit-scrollbar { width: 6px; }
+    .thin-scroll::-webkit-scrollbar-thumb { background: rgba(148,163,184,0.4); border-radius: 9999px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 h-screen overflow-hidden flex transition-colors">
+
+  <!-- Sidebar -->
+  <aside id="sidebar" class="w-72 shrink-0 bg-slate-100/90 dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col h-full transition-all duration-200">
+    <!-- Top Row: Home Logo + Search & Collapse Icons -->
+    <div class="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2 min-w-0">
+        <span class="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-sm shrink-0">A</span>
+        <span class="font-semibold text-base tracking-tight truncate">aiforteachers</span>
+      </div>
+      <div class="flex items-center gap-1 shrink-0">
+        <button id="btn-search-toggle" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300" title="Search">
+          <i data-lucide="search" class="w-4 h-4"></i>
+        </button>
+        <button id="btn-collapse" class="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300" title="Collapse">
+          <i data-lucide="panel-left-close" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Expandable Search Input -->
+    <div id="search-wrap" class="px-4 pb-2 hidden">
+      <input id="search-input" type="text" data-i18n-placeholder="search_placeholder" class="w-full px-3 py-1.5 text-sm rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Search history..." />
+    </div>
+
+    <!-- Open New Chat (Large Button) + Curriculum Standards Button -->
+    <div class="px-4 py-2 space-y-2">
+      <button id="btn-new-chat" class="w-full py-2.5 px-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm flex items-center justify-center gap-2 shadow-sm transition">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        <span data-i18n="new_chat">Open New Chat</span>
+      </button>
+      <button id="btn-standards" class="w-full py-2 px-3 rounded-xl border border-slate-300 dark:border-slate-700 bg-white/70 dark:bg-slate-800/70 hover:bg-slate-200/70 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium text-xs flex items-center justify-center gap-2 transition">
+        <i data-lucide="folder-plus" class="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"></i>
+        <span data-i18n="curriculum_folders">Curriculum Standards</span>
+      </button>
+    </div>
+
+    <!-- History Header & List -->
+    <div class="px-4 pt-2 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400" data-i18n="history">History</div>
+    <div id="history-list" class="flex-1 overflow-y-auto px-2 pb-2 space-y-0.5 thin-scroll"></div>
+
+    <!-- Bottom Settings -->
+    <div class="p-3 border-t border-slate-200 dark:border-slate-800">
+      <button id="btn-settings" class="w-full px-3 py-2 rounded-xl hover:bg-slate-200/80 dark:hover:bg-slate-800 flex items-center gap-2.5 text-sm font-medium text-slate-700 dark:text-slate-200 transition">
+        <i data-lucide="settings" class="w-4 h-4"></i>
+        <span data-i18n="settings">Settings</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main Body Area -->
+  <main class="flex-1 flex flex-col h-full min-w-0 bg-white dark:bg-slate-950 relative">
+    <!-- Top-left Title (y-axis lower than home logo) -->
+    <header class="pt-7 pb-3 px-6 border-b border-slate-100 dark:border-slate-900 flex items-center justify-between gap-3 shrink-0">
+      <div class="flex items-center gap-3 min-w-0">
+        <button id="btn-expand" class="hidden p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300" title="Expand">
+          <i data-lucide="panel-left-open" class="w-4 h-4"></i>
+        </button>
+        <h1 id="chat-title" class="text-base font-semibold truncate">New Chat</h1>
+      </div>
+      
+    </header>
+
+    <!-- Chat Box -->
+    <div id="chat-scroll" class="flex-1 overflow-y-auto px-4 sm:px-8 py-6 thin-scroll">
+      <div id="chat-container" class="max-w-3xl mx-auto space-y-6"></div>
+    </div>
+
+    <!-- Input Area -->
+    <div class="px-4 sm:px-8 pb-5 pt-2 shrink-0">
+      <div class="max-w-3xl mx-auto">
+        <!-- Selection Auto-Quote Banner -->
+        <div id="quote-banner" class="hidden mb-2 px-3 py-2 rounded-xl bg-blue-50 dark:bg-blue-950/50 border border-blue-200 dark:border-blue-800 flex items-start justify-between gap-2 text-xs text-blue-800 dark:text-blue-200">
+          <div class="flex items-start gap-2 min-w-0">
+            <i data-lucide="quote" class="w-3.5 h-3.5 mt-0.5 shrink-0"></i>
+            <span id="quote-preview" class="line-clamp-2 italic"></span>
+          </div>
+          <button id="btn-clear-quote" class="p-0.5 hover:text-blue-600 shrink-0"><i data-lucide="x" class="w-3.5 h-3.5"></i></button>
+        </div>
+
+        <div class="rounded-2xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 p-3 shadow-sm focus-within:ring-2 focus-within:ring-blue-500/40">
+          <textarea id="prompt-input" rows="2" data-i18n-placeholder="prompt_placeholder" class="w-full bg-transparent resize-none text-sm focus:outline-none placeholder-slate-400 dark:placeholder-slate-500" placeholder="Describe the subject, grade level, and lesson topic..."></textarea>
+          <div class="flex items-center justify-between pt-2">
+            <label class="inline-flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 cursor-pointer select-none">
+              <input id="toggle-web-search" type="checkbox" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+              <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+              <span data-i18n="web_search">Web Search (Optional)</span>
+            </label>
+            <button id="btn-send" class="px-4 py-1.5 rounded-xl bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-sm font-medium flex items-center gap-1.5 transition">
+              <span data-i18n="send">Send</span>
+              <i data-lucide="arrow-up" class="w-4 h-4"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Settings Modal with 4 Clearly Delineated Menu Options -->
+  <div id="settings-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full h-[540px] max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <h2 class="text-base font-semibold" data-i18n="settings">Settings</h2>
+        <button id="btn-close-settings" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="flex-1 flex flex-col sm:flex-row min-h-0">
+        <!-- Distinct 4-Option Settings Navigation -->
+        <nav class="sm:w-52 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-800 p-3 flex sm:flex-col gap-1 overflow-x-auto bg-slate-50/70 dark:bg-slate-900/50">
+          <button data-tab="api" class="settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-200">
+            <i data-lucide="key-round" class="w-4 h-4 shrink-0"></i>
+            <span data-i18n="tab_api">1. API</span>
+          </button>
+          <button data-tab="memory" class="settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
+            <i data-lucide="brain" class="w-4 h-4 shrink-0"></i>
+            <span data-i18n="tab_memory">2. Memory</span>
+          </button>
+          <button data-tab="language" class="settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
+            <i data-lucide="languages" class="w-4 h-4 shrink-0"></i>
+            <span data-i18n="tab_language">3. Language</span>
+          </button>
+          <button data-tab="theme" class="settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
+            <i data-lucide="sun-moon" class="w-4 h-4 shrink-0"></i>
+            <span data-i18n="tab_theme">4. Light / Dark Mode</span>
+          </button>
+          <button data-tab="help" class="settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800">
+            <i data-lucide="help-circle" class="w-4 h-4 shrink-0"></i>
+            <span data-i18n="tab_help">5. Help</span>
+          </button>
+        </nav>
+
+        <!-- Tab Panels -->
+        <div class="flex-1 p-5 overflow-y-auto text-sm thin-scroll">
+          <!-- Panel 1: API -->
+          <section id="panel-api" class="settings-panel space-y-4">
+            <h3 class="font-semibold text-sm text-slate-800 dark:text-slate-100" data-i18n="sec_api">API Configuration &amp; Validation</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium mb-1" data-i18n="provider">Provider</label>
+                <select id="set-provider" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"></select>
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1" data-i18n="base_url">Base URL</label>
+                <input id="set-base-url" type="url" data-i18n-placeholder="base_url_placeholder" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="https://api.openai.com/v1" />
+              </div>
+              <div>
+                <label class="block text-xs font-medium mb-1" data-i18n="api_key">API Key</label>
+                <input id="set-api-key" type="password" data-i18n-placeholder="api_key_placeholder" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Enter your API key" />
+              </div>
+              <div class="flex items-center gap-2">
+                <button id="btn-validate-api" class="px-3.5 py-2 rounded-lg bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium flex items-center gap-1.5 hover:opacity-90 transition">
+                  <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+                  <span data-i18n="validate_btn">Validate &amp; Fetch Models</span>
+                </button>
+                <span id="api-validation-status" class="text-xs text-slate-500 dark:text-slate-400"></span>
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label class="block text-xs font-medium mb-1" data-i18n="model_name">Model Name</label>
+                  <select id="set-model" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"></select>
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1" data-i18n="thinking_level">Thinking Level</label>
+                  <select id="set-thinking" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800"></select>
+                  <span id="thinking-validation-status" class="block mt-1 text-[11px] text-slate-500 dark:text-slate-400"></span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Panel 2: Personalized Memory -->
+          <section id="panel-memory" class="settings-panel hidden space-y-4">
+            <h3 class="font-semibold text-sm text-slate-800 dark:text-slate-100" data-i18n="sec_memory">Personalized Memory</h3>
+            <div class="space-y-3">
+              <div>
+                <label class="block text-xs font-medium mb-1" data-i18n="focus_areas">Teacher's Focus Areas</label>
+                <input id="mem-focus" type="text" data-i18n-placeholder="focus_placeholder" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="e.g., Grade 7 STEM, inquiry-based labs, ESL scaffolding" />
+              </div>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-medium mb-1" data-i18n="file_naming">File Naming Pattern</label>
+                  <input id="mem-naming" type="text" data-i18n-placeholder="naming_placeholder" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="{title}_{date}" />
+                </div>
+                <div>
+                  <label class="block text-xs font-medium mb-1" data-i18n="chat_style">Chat Style</label>
+                  <input id="mem-style" type="text" data-i18n-placeholder="style_placeholder" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Clear, structured, classroom-ready" />
+                </div>
+                <div class="sm:col-span-2">
+                  <label class="block text-xs font-medium mb-1" data-i18n="storage_duration">Chat Storage Duration</label>
+                  <select id="set-storage-days" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+                    <option value="7">7 Days</option>
+                    <option value="30">30 Days</option>
+                    <option value="90">90 Days</option>
+                    <option value="0">Forever</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Panel 3: Language -->
+          <section id="panel-language" class="settings-panel hidden space-y-4">
+            <h3 class="font-semibold text-sm text-slate-800 dark:text-slate-100" data-i18n="sec_language">Language</h3>
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2">
+              <label class="block text-xs font-medium" data-i18n="language">Interface Language</label>
+              <select id="set-language" class="w-full px-3 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800">
+                <option value="en">English</option>
+                <option value="zh">简体中文 (Chinese Simplified)</option>
+                <option value="zh-TW">繁體中文（台灣）</option>
+                <option value="es">Español (Spanish)</option>
+                <option value="fr">Français (French)</option>
+                <option value="de">Deutsch (German)</option>
+                <option value="ja">日本語 (Japanese)</option>
+                <option value="ko">한국어 (Korean)</option>
+                <option value="ru">Русский (Russian)</option>
+                <option value="id">Bahasa Indonesia</option>
+              </select>
+            </div>
+          </section>
+
+          <!-- Panel 3: Light / Dark Mode -->
+          <section id="panel-theme" class="settings-panel hidden space-y-4">
+            <h3 class="font-semibold text-sm text-slate-800 dark:text-slate-100" data-i18n="sec_theme">Light / Dark Mode</h3>
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+              <div>
+                <p class="font-medium text-sm" data-i18n="theme_title">Interface Appearance</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400" data-i18n="theme_desc">Switch between light and dark themes</p>
+              </div>
+              <button id="btn-theme-toggle" class="px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-medium flex items-center gap-2">
+                <i data-lucide="sun-moon" class="w-4 h-4"></i>
+                <span id="theme-label">Light</span>
+              </button>
+            </div>
+          </section>
+
+          <!-- Panel 4: Help -->
+          <section id="panel-help" class="settings-panel hidden space-y-4">
+            <h3 class="font-semibold text-sm text-slate-800 dark:text-slate-100" data-i18n="sec_help">Help &amp; Support</h3>
+            <div class="p-4 rounded-xl border border-slate-200 dark:border-slate-800 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+              <p data-i18n="help_desc">Need assistance with courseware generation, API setup, or curriculum folders?</p>
+              <p>
+                <span data-i18n="help_contact">Support &amp; Feedback Email:</span>
+                <a id="help-email-link" href="mailto:teacher-support@example.com" class="text-blue-600 dark:text-blue-400 underline ml-1">teacher-support@example.com</a>
+              </p>
+            </div>
+          </section>
+        </div>
+      </div>
+
+      <div class="px-5 py-3 border-t border-slate-200 dark:border-slate-800 flex justify-end gap-2 shrink-0">
+        <button id="btn-save-settings" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium" data-i18n="save">Save Settings</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Curriculum Standards Folders Modal -->
+  <div id="standards-modal" class="hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-2xl w-full h-[540px] max-h-[90vh] flex flex-col shadow-xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between shrink-0">
+        <h2 class="text-base font-semibold" data-i18n="curriculum_folders">Curriculum Standards</h2>
+        <button id="btn-close-standards" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="flex-1 flex flex-col sm:flex-row min-h-0">
+        <!-- Folder List -->
+        <div class="sm:w-56 shrink-0 border-b sm:border-b-0 sm:border-r border-slate-200 dark:border-slate-800 p-3 flex flex-col gap-2 bg-slate-50/70 dark:bg-slate-900/50">
+          <div class="flex gap-1.5">
+            <input id="new-folder-name" type="text" data-i18n-placeholder="folder_name_placeholder" class="flex-1 min-w-0 px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="New folder name..." />
+            <button id="btn-create-folder" class="px-2.5 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium shrink-0" title="Create Folder">+</button>
+          </div>
+          <div id="folder-list" class="flex-1 overflow-y-auto space-y-1 thin-scroll"></div>
+        </div>
+        <!-- Folder Contents & Add Standard Form -->
+        <div class="flex-1 p-4 overflow-y-auto space-y-4 text-sm thin-scroll">
+          <div id="folder-detail-header" class="flex items-center justify-between">
+            <h3 id="active-folder-title" class="font-semibold text-sm">Built-in Standards</h3>
+          </div>
+          <div id="add-standard-form" class="hidden p-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/60 dark:bg-slate-900/60 space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <input id="std-code" type="text" data-i18n-placeholder="std_code_ph" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Code (e.g., TW-108-M1)" />
+              <input id="std-subject" type="text" data-i18n-placeholder="std_subj_ph" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Subject" />
+              <input id="std-grade" type="text" data-i18n-placeholder="std_grade_ph" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Grade Level" />
+              <input id="std-title" type="text" data-i18n-placeholder="std_title_ph" class="px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Standard Title" />
+            </div>
+            <input id="std-obj" type="text" data-i18n-placeholder="std_obj_ph" class="w-full px-2.5 py-1.5 text-xs rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800" placeholder="Learning objective..." />
+            <button id="btn-add-standard" class="px-3 py-1.5 rounded-lg bg-blue-600 text-white text-xs font-medium" data-i18n="add_standard">Add Standard to Folder</button>
+          </div>
+          <div id="folder-items-list" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-page Rename / Download Modal -->
+  <div id="action-modal" class="hidden fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-sm w-full p-5 space-y-4 shadow-xl">
+      <h3 id="action-modal-title" class="text-sm font-semibold"></h3>
+      <div id="action-modal-body"></div>
+      <div id="action-modal-footer" class="flex justify-end gap-2"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="hidden fixed bottom-5 right-5 z-50 px-4 py-2 rounded-xl bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 text-xs font-medium shadow-lg"></div>
+
+  <script>
+    const IS_CANVAS = ['about:', 'blob:', 'file:'].includes(window.location.protocol) ||
+      window.location.hostname === '' ||
+      window.location.hostname.endsWith('usercontent.goog');
+
+    const PROVIDERS = {
+      openai: { label: 'OpenAI', baseUrl: 'https://api.openai.com/v1' },
+      google_ai_studio: { label: 'Google AI Studio', baseUrl: 'https://generativelanguage.googleapis.com/v1beta' },
+      deepseek: { label: 'DeepSeek', baseUrl: 'https://api.deepseek.com/v1' },
+      other: { label: 'Other Providers', baseUrl: '' }
+    };
+
+    const BUILTIN_STANDARDS = [
+      { id: 'MATH-K5-OA1', subject: 'Mathematics', grade_level: 'Elementary (K-5)', title: 'Operations & Algebraic Thinking', objectives: ['Represent and solve problems involving four operations.'], keywords: ['math', 'fractions', 'elementary', 'algebra'] },
+      { id: 'SCI-68-PS1', subject: 'Science', grade_level: 'Middle School (6-8)', title: 'Matter, Energy & Forces', objectives: ['Analyze properties of matter and conservation of energy.'], keywords: ['science', 'physics', 'chemistry', 'matter', 'energy', 'forces'] },
+      { id: 'ELA-K5-RL1', subject: 'English Language Arts', grade_level: 'Elementary (K-5)', title: 'Reading Comprehension & Writing', objectives: ['Cite text evidence and write structured arguments.'], keywords: ['reading', 'writing', 'english', 'ela'] },
+      { id: 'CS-K12-ALG1', subject: 'Computer Science', grade_level: 'Grades K-12', title: 'Algorithms & Computational Thinking', objectives: ['Decompose problems and design iterative algorithms.'], keywords: ['coding', 'python', 'algorithms', 'computer'] }
+    ];
+
+    const I18N = {
+      en: {
+        new_chat: 'Open New Chat', curriculum_folders: 'Curriculum Standards', history: 'History', settings: 'Settings',
+        web_search: 'Web Search (Optional)', send: 'Send', new_chat_title: 'New Chat',
+        tab_api: '1. API', tab_memory: '2. Memory', tab_language: '3. Language', tab_theme: '4. Light / Dark Mode', tab_help: '5. Help', sec_language: 'Language',
+        sec_api: 'API Configuration & Validation', provider: 'Provider', base_url: 'Base URL', api_key: 'API Key',
+        validate_btn: 'Validate & Fetch Models', model_name: 'Model Name', thinking_level: 'Thinking Level',
+        sec_memory: 'Personalized Memory & Language', focus_areas: "Teacher's Focus Areas", file_naming: 'File Naming Pattern',
+        chat_style: 'Chat Style', storage_duration: 'Chat Storage Duration', language: 'Language',
+        sec_theme: 'Light / Dark Mode', theme_title: 'Interface Appearance', theme_desc: 'Switch between light and dark themes',
+        sec_help: 'Help & Support', help_desc: 'Need assistance with courseware generation, API setup, or curriculum folders?',
+        help_contact: 'Support & Feedback Email:', save: 'Save Settings',
+        welcome_title: 'Ready to prepare your next lesson?', welcome_sub: 'Choose a regional textbook suggestion below or enter your own topic.',
+        search_placeholder: 'Search history...', prompt_placeholder: 'Describe the subject, grade level, textbook, and lesson topic...',
+        focus_placeholder: 'e.g., Grade 7 STEM, inquiry-based labs, ESL scaffolding', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Clear, structured, classroom-ready', api_key_placeholder: 'Enter your API key', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'New folder name...', std_code_ph: 'Code (e.g., NGSS-MS-PS1)', std_subj_ph: 'Subject',
+        std_grade_ph: 'Grade Level', std_title_ph: 'Standard Title', std_obj_ph: 'Learning objective...', add_standard: 'Add Standard to Folder',
+        copy: 'Copy', compose: 'Compose', regenerate: 'Regenerate', download: 'Download', thinking_proc: 'Thinking Process',
+        pin: 'Pin', unpin: 'Unpin', rename: 'Rename', del: 'Delete', close: 'Close', cancel: 'Cancel',
+        light: 'Light', dark: 'Dark', not_validated: 'Not validated yet',
+        suggestions: [
+          { label: 'OpenStax · High School Algebra: Quadratic Functions 45-min lesson', prompt: 'Create a 45-minute High School Algebra lesson plan on Quadratic Functions aligned with OpenStax and Common Core.' },
+          { label: 'NGSS · Grade 7 Science: Matter & Energy Inquiry Lab', prompt: 'Design a Grade 7 Science inquiry lab on Matter, Energy & Forces aligned with NGSS.' },
+          { label: 'AP / IB History · Primary Source Analysis Activity', prompt: 'Create a primary source analysis lesson activity for High School History.' },
+          { label: 'CSTA · Grade 6 Computer Science: Algorithms & Loops', prompt: 'Build an introductory Grade 6 Computer Science lesson on algorithms and loops.' }
+        ]
+      },
+      zh: {
+        new_chat: '开启新对话', curriculum_folders: '课程标准文件夹', history: '历史记录', settings: '设置',
+        web_search: '联网检索（可选）', send: '发送', new_chat_title: '新对话',
+        tab_api: '1. API 配置', tab_memory: '2. 个性化记忆', tab_language: '3. 语言', tab_theme: '4. 浅色/深色模式', tab_help: '5. 帮助', sec_language: '语言设置',
+        sec_api: 'API 配置与在线校验', provider: '模型服务商', base_url: 'Base URL（接口地址）', api_key: 'API 密钥',
+        validate_btn: '校验并获取最新模型', model_name: '模型名称', thinking_level: '思考强度',
+        sec_memory: '个性化记忆与语言', focus_areas: '教师关注领域', file_naming: '文件命名规则',
+        chat_style: '对话风格', storage_duration: '聊天保存时长', language: '界面语言',
+        sec_theme: '浅色 / 深色模式', theme_title: '界面外观', theme_desc: '在浅色与深色主题之间切换',
+        sec_help: '帮助与支持', help_desc: '在使用智能备课、API 校验或课标文件夹时遇到问题？',
+        help_contact: '支持与反馈邮箱：', save: '保存设置',
+        welcome_title: '准备好开始智能备课了吗？', welcome_sub: '可选择下方各版本教材备课建议，或直接输入教学需求。',
+        search_placeholder: '搜索历史记录...', prompt_placeholder: '请输入学科、年级、教材版本与备课主题...',
+        focus_placeholder: '例如：初中物理探究实验、小学高年级阅读写作', naming_placeholder: '{title}_{date}',
+        style_placeholder: '条理清晰、可直接用于课堂', api_key_placeholder: '请输入您的 API 密钥', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: '新建文件夹名称...', std_code_ph: '课标编号（如 PEP-8-PHY）', std_subj_ph: '学科',
+        std_grade_ph: '年级', std_title_ph: '课标标题', std_obj_ph: '教学目标...', add_standard: '添加课标到文件夹',
+        copy: '复制', compose: '重新编辑', regenerate: '重新生成', download: '下载', thinking_proc: '思考过程',
+        pin: '置顶', unpin: '取消置顶', rename: '重命名', del: '删除', close: '关闭', cancel: '取消',
+        light: '浅色', dark: '深色', not_validated: '尚未校验',
+        suggestions: [
+          { label: '人教版 · 八年级物理《力与运动》45分钟教案', prompt: '请根据人教版八年级物理教材，设计一节《力与运动》45分钟探究式教案并附随堂练习。' },
+          { label: '北师大版 · 五年级数学《分数的意义》课堂活动', prompt: '请结合北师大版五年级数学，设计《分数的意义》互动课堂活动与分层作业。' },
+          { label: '统编版 · 初中语文《背影》精读与写作迁移', prompt: '请为统编版初中语文《背影》设计一课时精读教案与细节描写训练。' },
+          { label: '外研版 · 高中英语阅读理解与思维导图设计', prompt: '请设计一节外研版高中英语阅读课教案，包含读前预测、略读与读后输出。' }
+        ]
+      },
+      'zh-TW': {
+        new_chat: '開啟新對話', curriculum_folders: '課綱標準資料夾', history: '歷史紀錄', settings: '設定',
+        web_search: '網路檢索（選填）', send: '傳送', new_chat_title: '新對話',
+        tab_api: '1. API 設定', tab_memory: '2. 個人化記憶', tab_language: '3. 語言', tab_theme: '4. 淺色/深色模式', tab_help: '5. 說明', sec_language: '語言設定',
+        sec_api: 'API 設定與線上驗證', provider: '模型供應商', base_url: 'Base URL（端點網址）', api_key: 'API 金鑰',
+        validate_btn: '驗證並取得最新模型', model_name: '模型名稱', thinking_level: '思考強度',
+        sec_memory: '個人化記憶與語言', focus_areas: '教師關注領域', file_naming: '檔案命名規則',
+        chat_style: '對話風格', storage_duration: '對話保存期限', language: '介面語言',
+        sec_theme: '淺色 / 深色模式', theme_title: '介面外觀', theme_desc: '切換淺色或深色主題',
+        sec_help: '說明與支援', help_desc: '需要備課流程、API 驗證或課綱資料夾的協助嗎？',
+        help_contact: '支援與回饋信箱：', save: '儲存設定',
+        welcome_title: '準備好進行下一堂課的備課了嗎？', welcome_sub: '可點選下方臺灣常見版本教材建議，或直接輸入教學主題。',
+        search_placeholder: '搜尋歷史對話...', prompt_placeholder: '請輸入科目、年級、教材版本與備課主題...',
+        focus_placeholder: '例如：108課綱素養導向、國中自然探究與實作', naming_placeholder: '{title}_{date}',
+        style_placeholder: '結構清晰、符合素養導向教學', api_key_placeholder: '請輸入您的 API 金鑰', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: '新增資料夾名稱...', std_code_ph: '課綱代碼（如 108-自-J-1）', std_subj_ph: '科目',
+        std_grade_ph: '年級', std_title_ph: '課綱標題', std_obj_ph: '學習表現／學習內容...', add_standard: '新增課綱至資料夾',
+        copy: '複製', compose: '重新編輯', regenerate: '重新產生', download: '下載', thinking_proc: '思考過程',
+        pin: '釘選', unpin: '取消釘選', rename: '重新命名', del: '刪除', close: '關閉', cancel: '取消',
+        light: '淺色', dark: '深色', not_validated: '尚未驗證',
+        suggestions: [
+          { label: '康軒版 · 國中自然《物質的世界與能量》素養教案', prompt: '請依 108 課綱與康軒版國中自然教材，設計一堂 45 分鐘《物質與能量》探究實作教案。' },
+          { label: '翰林版 · 國小五年級數學《分數的加減》分組活動', prompt: '請結合翰林版國小五年級數學，設計《分數的加減》課堂活動與形成性評量題組。' },
+          { label: '南一版 · 高中國文《赤壁賦》文本探究與提問設計', prompt: '請為南一版高中國文《赤壁賦》設計符合 108 課綱的深度提問與學習單。' },
+          { label: '龍騰版 · 高中資訊科技《演算法與程式設計》實作課', prompt: '請設計一節龍騰版高中資訊科技《演算法思維》實作教案與評量規準。' }
+        ]
+      },
+      es: {
+        new_chat: 'Nuevo Chat', curriculum_folders: 'Estándares Curriculares', history: 'Historial', settings: 'Ajustes',
+        web_search: 'Búsqueda web (Opcional)', send: 'Enviar', new_chat_title: 'Nuevo Chat',
+        tab_api: '1. API', tab_memory: '2. Memoria', tab_language: '3. Idioma', tab_theme: '4. Modo Claro / Oscuro', tab_help: '5. Ayuda', sec_language: 'Idioma',
+        sec_api: 'Configuración y Validación de API', provider: 'Proveedor', base_url: 'URL Base', api_key: 'Clave API',
+        validate_btn: 'Validar y Obtener Modelos', model_name: 'Modelo', thinking_level: 'Nivel de pensamiento',
+        sec_memory: 'Memoria Personalizada e Idioma', focus_areas: 'Áreas de enfoque del docente', file_naming: 'Patrón de nombre',
+        chat_style: 'Estilo de chat', storage_duration: 'Duración del historial', language: 'Idioma',
+        sec_theme: 'Modo Claro / Oscuro', theme_title: 'Apariencia', theme_desc: 'Cambiar entre tema claro y oscuro',
+        sec_help: 'Ayuda y Soporte', help_desc: '¿Necesitas ayuda con planes de clase, API o carpetas curriculares?',
+        help_contact: 'Correo de soporte:', save: 'Guardar Ajustes',
+        welcome_title: '¿Listo para preparar tu próxima clase?', welcome_sub: 'Elige una sugerencia editorial o escribe tu tema.',
+        search_placeholder: 'Buscar en el historial...', prompt_placeholder: 'Describe la materia, grado, libro de texto y tema...',
+        focus_placeholder: 'Ej.: Ciencias 7.º grado, aprendizaje basado en proyectos', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Claro, estructurado y listo para el aula', api_key_placeholder: 'Ingresa tu clave API', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'Nombre de nueva carpeta...', std_code_ph: 'Código', std_subj_ph: 'Materia',
+        std_grade_ph: 'Grado', std_title_ph: 'Título del estándar', std_obj_ph: 'Objetivo de aprendizaje...', add_standard: 'Agregar estándar',
+        copy: 'Copiar', compose: 'Editar', regenerate: 'Regenerar', download: 'Descargar', thinking_proc: 'Proceso de pensamiento',
+        pin: 'Fijar', unpin: 'Desfijar', rename: 'Renombrar', del: 'Eliminar', close: 'Cerrar', cancel: 'Cancelar',
+        light: 'Claro', dark: 'Oscuro', not_validated: 'Sin validar',
+        suggestions: [
+          { label: 'Santillana · Matemáticas 5.º Primaria: Fracciones', prompt: 'Crea un plan de clase de 45 minutos sobre fracciones basado en Santillana 5.º de Primaria.' },
+          { label: 'SEP / SM · Biología Secundaria: Ecosistemas', prompt: 'Diseña una actividad práctica sobre ecosistemas y cadenas tróficas para secundaria.' }
+        ]
+      },
+      fr: {
+        new_chat: 'Nouvelle Discussion', curriculum_folders: 'Programmes Scolaires', history: 'Historique', settings: 'Paramètres',
+        web_search: 'Recherche Web (Optionnel)', send: 'Envoyer', new_chat_title: 'Nouvelle Discussion',
+        tab_api: '1. API', tab_memory: '2. Mémoire', tab_language: '3. Langue', tab_theme: '4. Mode Clair / Sombre', tab_help: '5. Aide', sec_language: 'Langue',
+        sec_api: 'Configuration et Validation API', provider: 'Fournisseur', base_url: 'URL de base', api_key: 'Clé API',
+        validate_btn: 'Valider et Charger les Modèles', model_name: 'Modèle', thinking_level: 'Niveau de réflexion',
+        sec_memory: 'Mémoire et Langue', focus_areas: 'Domaines prioritaires', file_naming: 'Nommage des fichiers',
+        chat_style: 'Style de discussion', storage_duration: 'Durée de conservation', language: 'Langue',
+        sec_theme: 'Mode Clair / Sombre', theme_title: 'Apparence', theme_desc: 'Basculer entre le thème clair et sombre',
+        sec_help: 'Aide et Support', help_desc: 'Besoin d’aide pour vos séances ou la configuration API ?',
+        help_contact: 'E-mail d’assistance :', save: 'Enregistrer',
+        welcome_title: 'Prêt à préparer votre prochain cours ?', welcome_sub: 'Choisissez une suggestion de manuel ou saisissez votre sujet.',
+        search_placeholder: 'Rechercher dans l’historique...', prompt_placeholder: 'Indiquez la matière, le niveau, le manuel et le thème...',
+        focus_placeholder: 'Ex. : Physique-Chimie 4e, démarche d’investigation', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Clair, structuré et prêt pour la classe', api_key_placeholder: 'Entrez votre clé API', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'Nom du dossier...', std_code_ph: 'Code', std_subj_ph: 'Matière',
+        std_grade_ph: 'Niveau', std_title_ph: 'Intitulé', std_obj_ph: 'Objectif pédagogique...', add_standard: 'Ajouter au dossier',
+        copy: 'Copier', compose: 'Modifier', regenerate: 'Régénérer', download: 'Télécharger', thinking_proc: 'Réflexion',
+        pin: 'Épingler', unpin: 'Désépingler', rename: 'Renommer', del: 'Supprimer', close: 'Fermer', cancel: 'Annuler',
+        light: 'Clair', dark: 'Sombre', not_validated: 'Non validé',
+        suggestions: [
+          { label: 'Hachette · Physique-Chimie 4e : Énergie et Matière', prompt: 'Prépare une séance de 45 min sur la matière et l’énergie inspirée du manuel Hachette 4e.' },
+          { label: 'Nathan · Français CM2 : Compréhension de texte', prompt: 'Crée un atelier de lecture et d’écriture structuré pour une classe de CM2 (Nathan).' }
+        ]
+      },
+      de: {
+        new_chat: 'Neuer Chat', curriculum_folders: 'Lehrplan-Ordner', history: 'Verlauf', settings: 'Einstellungen',
+        web_search: 'Websuche (Optional)', send: 'Senden', new_chat_title: 'Neuer Chat',
+        tab_api: '1. API', tab_memory: '2. Speicher', tab_language: '3. Sprache', tab_theme: '4. Hell-/Dunkelmodus', tab_help: '5. Hilfe', sec_language: 'Sprache',
+        sec_api: 'API-Konfiguration & Validierung', provider: 'Anbieter', base_url: 'Basis-URL', api_key: 'API-Schlüssel',
+        validate_btn: 'Prüfen & Modelle laden', model_name: 'Modellname', thinking_level: 'Denktiefe',
+        sec_memory: 'Speicher & Sprache', focus_areas: 'Schwerpunkte der Lehrkraft', file_naming: 'Dateibenennung',
+        chat_style: 'Chat-Stil', storage_duration: 'Speicherdauer', language: 'Sprache',
+        sec_theme: 'Hell- / Dunkelmodus', theme_title: 'Erscheinungsbild', theme_desc: 'Zwischen hellem und dunklem Design wechseln',
+        sec_help: 'Hilfe & Support', help_desc: 'Fragen zur Unterrichtsplanung oder API-Einrichtung?',
+        help_contact: 'Support-E-Mail:', save: 'Speichern',
+        welcome_title: 'Bereit für die Unterrichtsvorbereitung?', welcome_sub: 'Wählen Sie einen Schulbuch-Vorschlag oder geben Sie ein Thema ein.',
+        search_placeholder: 'Verlauf durchsuchen...', prompt_placeholder: 'Fach, Klassenstufe, Schulbuch und Thema eingeben...',
+        focus_placeholder: 'z. B. Sekundarstufe I Mathematik, Binnendifferenzierung', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Klar, strukturiert, unterrichtsfertig', api_key_placeholder: 'API-Schlüssel eingeben', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'Neuer Ordnername...', std_code_ph: 'Code', std_subj_ph: 'Fach',
+        std_grade_ph: 'Klassenstufe', std_title_ph: 'Titel', std_obj_ph: 'Lernziel...', add_standard: 'Zum Ordner hinzufügen',
+        copy: 'Kopieren', compose: 'Bearbeiten', regenerate: 'Neu generieren', download: 'Herunterladen', thinking_proc: 'Denkprozess',
+        pin: 'Anheften', unpin: 'Lösen', rename: 'Umbenennen', del: 'Löschen', close: 'Schließen', cancel: 'Abbrechen',
+        light: 'Hell', dark: 'Dunkel', not_validated: 'Nicht geprüft',
+        suggestions: [
+          { label: 'Cornelsen · Mathematik 7. Klasse: Lineare Gleichungen', prompt: 'Erstelle einen 45-minütigen Unterrichtsentwurf zu linearen Gleichungen (Cornelsen Mathematik 7).' },
+          { label: 'Klett · Biologie Sekundarstufe: Ökosysteme', prompt: 'Entwirf eine schüleraktivierende Biologiestunde zum Thema Ökosysteme (Klett).' }
+        ]
+      },
+      ja: {
+        new_chat: '新しいチャット', curriculum_folders: '学習指導要領フォルダ', history: '履歴', settings: '設定',
+        web_search: 'Web検索（任意）', send: '送信', new_chat_title: '新しいチャット',
+        tab_api: '1. API設定', tab_memory: '2. メモリ', tab_language: '3. 言語', tab_theme: '4. ライト/ダーク', tab_help: '5. ヘルプ', sec_language: '言語設定',
+        sec_api: 'API設定と接続検証', provider: 'プロバイダー', base_url: 'ベースURL', api_key: 'APIキー',
+        validate_btn: '検証してモデル取得', model_name: 'モデル名', thinking_level: '思考レベル',
+        sec_memory: 'パーソナライズメモリと言語', focus_areas: '教師の重点分野', file_naming: 'ファイル命名規則',
+        chat_style: 'チャットスタイル', storage_duration: '保存期間', language: '言語',
+        sec_theme: 'ライト / ダークモード', theme_title: '外観設定', theme_desc: 'ライトテーマとダークテーマを切り替えます',
+        sec_help: 'ヘルプとサポート', help_desc: '授業案の作成やAPI設定でお困りですか？',
+        help_contact: 'サポートメール：', save: '設定を保存',
+        welcome_title: '次の授業準備を始めましょう', welcome_sub: '教科書別の提案を選ぶか、授業テーマを入力してください。',
+        search_placeholder: '履歴を検索...', prompt_placeholder: '教科、学年、教科書名、授業テーマを入力...',
+        focus_placeholder: '例：中学校理科の探究実験、個別最適な学び', naming_placeholder: '{title}_{date}',
+        style_placeholder: '構造的で授業にすぐ使える形式', api_key_placeholder: 'APIキーを入力', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: '新規フォルダ名...', std_code_ph: 'コード', std_subj_ph: '教科',
+        std_grade_ph: '学年', std_title_ph: '指導要領タイトル', std_obj_ph: '学習目標...', add_standard: 'フォルダに追加',
+        copy: 'コピー', compose: '編集', regenerate: '再生成', download: 'ダウンロード', thinking_proc: '思考プロセス',
+        pin: '固定', unpin: '固定解除', rename: '名前変更', del: '削除', close: '閉じる', cancel: 'キャンセル',
+        light: 'ライト', dark: 'ダーク', not_validated: '未検証',
+        suggestions: [
+          { label: '東京書籍 · 中学理科「物質とエネルギー」45分授業案', prompt: '東京書籍の中学理科に準拠した「物質とエネルギー」の45分授業案を作成してください。' },
+          { label: '啓林館 · 小学5年算数「分数のたし算」指導案', prompt: '啓林館の小学5年算数「分数のたし算」の導入活動と確認テストを作成してください。' }
+        ]
+      },
+      ko: {
+        new_chat: '새 채팅 열기', curriculum_folders: '교육과정 폴더', history: '기록', settings: '설정',
+        web_search: '웹 검색(선택)', send: '전송', new_chat_title: '새 채팅',
+        tab_api: '1. API 설정', tab_memory: '2. 메모리', tab_language: '3. 언어', tab_theme: '4. 라이트/다크 모드', tab_help: '5. 도움말', sec_language: '언어 설정',
+        sec_api: 'API 설정 및 유효성 검사', provider: '제공업체', base_url: '기본 URL', api_key: 'API 키',
+        validate_btn: '검증 및 모델 불러오기', model_name: '모델 이름', thinking_level: '사고 수준',
+        sec_memory: '개인화 메모리 및 언어', focus_areas: '교사 집중 분야', file_naming: '파일 이름 규칙',
+        chat_style: '채팅 스타일', storage_duration: '저장 기간', language: '언어',
+        sec_theme: '라이트 / 다크 모드', theme_title: '화면 테마', theme_desc: '라이트 및 다크 테마 전환',
+        sec_help: '도움말 및 지원', help_desc: '수업 설계나 API 검증에 도움이 필요하신가요?',
+        help_contact: '지원 이메일:', save: '설정 저장',
+        welcome_title: '다음 수업을 준비할까요?', welcome_sub: '아래 교과서별 추천을 선택하거나 수업 주제를 입력하세요.',
+        search_placeholder: '기록 검색...', prompt_placeholder: '과목, 학년, 교과서 및 수업 주제를 입력하세요...',
+        focus_placeholder: '예: 중등 과학 탐구 실험, 학생 참여형 수업', naming_placeholder: '{title}_{date}',
+        style_placeholder: '체계적이고 수업에 바로 활용 가능', api_key_placeholder: 'API 키 입력', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: '새 폴더 이름...', std_code_ph: '성취기준 코드', std_subj_ph: '과목',
+        std_grade_ph: '학년', std_title_ph: '성취기준 제목', std_obj_ph: '학습 목표...', add_standard: '폴더에 추가',
+        copy: '복사', compose: '수정', regenerate: '다시 생성', download: '다운로드', thinking_proc: '사고 과정',
+        pin: '고정', unpin: '고정 해제', rename: '이름 바꾸기', del: '삭제', close: '닫기', cancel: '취소',
+        light: '라이트', dark: '다크', not_validated: '미검증',
+        suggestions: [
+          { label: '비상교육 · 중등 과학「물질과 에너지」45분 지도안', prompt: '비상교육 중등 과학 교과서를 바탕으로 물질과 에너지 45분 수업 지도안을 작성해 주세요.' },
+          { label: '천재교육 · 초등 5학년 수학「분수의 덧셈」활동지', prompt: '천재교육 초등 5학년 수학 분수의 덧셈 수업 활동과 형성평가 문항을 만들어 주세요.' }
+        ]
+      },
+      ru: {
+        new_chat: 'Новый чат', curriculum_folders: 'Папки стандартов', history: 'История', settings: 'Настройки',
+        web_search: 'Веб-поиск (опц.)', send: 'Отправить', new_chat_title: 'Новый чат',
+        tab_api: '1. API', tab_memory: '2. Память', tab_language: '3. Язык', tab_theme: '4. Светлая/тёмная тема', tab_help: '5. Помощь', sec_language: 'Язык',
+        sec_api: 'Настройка и проверка API', provider: 'Провайдер', base_url: 'Base URL', api_key: 'API-ключ',
+        validate_btn: 'Проверить и загрузить модели', model_name: 'Модель', thinking_level: 'Уровень размышления',
+        sec_memory: 'Персональная память и язык', focus_areas: 'Области фокуса учителя', file_naming: 'Шаблон имени файла',
+        chat_style: 'Стиль общения', storage_duration: 'Срок хранения', language: 'Язык',
+        sec_theme: 'Светлая / тёмная тема', theme_title: 'Оформление', theme_desc: 'Переключение светлой и тёмной темы',
+        sec_help: 'Помощь и поддержка', help_desc: 'Нужна помощь с подготовкой уроков или настройкой API?',
+        help_contact: 'Почта поддержки:', save: 'Сохранить настройки',
+        welcome_title: 'Готовы к подготовке урока?', welcome_sub: 'Выберите вариант по учебнику ниже или введите свою тему.',
+        search_placeholder: 'Поиск по истории...', prompt_placeholder: 'Укажите предмет, класс, учебник и тему урока...',
+        focus_placeholder: 'Напр.: физика 7 класс, лабораторные практикумы', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Чётко, структурированно, готово к уроку', api_key_placeholder: 'Введите API-ключ', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'Имя новой папки...', std_code_ph: 'Код ФГОС', std_subj_ph: 'Предмет',
+        std_grade_ph: 'Класс', std_title_ph: 'Название', std_obj_ph: 'Цель обучения...', add_standard: 'Добавить в папку',
+        copy: 'Копировать', compose: 'Редактировать', regenerate: 'Повторить', download: 'Скачать', thinking_proc: 'Ход размышлений',
+        pin: 'Закрепить', unpin: 'Открепить', rename: 'Переименовать', del: 'Удалить', close: 'Закрыть', cancel: 'Отмена',
+        light: 'Светлая', dark: 'Тёмная', not_validated: 'Не проверено',
+        suggestions: [
+          { label: 'Просвещение · Физика 7 класс: Силы и энергия (45 мин)', prompt: 'Составь план урока на 45 минут по физике 7 класс (учебник Просвещение) по теме силы и энергия.' },
+          { label: 'Просвещение · Алгебра 8 класс: Квадратные уравнения', prompt: 'Разработай интерактивный урок и мини-тест по алгебре 8 класс по учебнику Просвещение.' }
+        ]
+      },
+      id: {
+        new_chat: 'Buka Obrolan Baru', curriculum_folders: 'Folder Kurikulum', history: 'Riwayat', settings: 'Pengaturan',
+        web_search: 'Pencarian Web (Opsional)', send: 'Kirim', new_chat_title: 'Obrolan Baru',
+        tab_api: '1. API', tab_memory: '2. Memori', tab_language: '3. Bahasa', tab_theme: '4. Mode Terang/Gelap', tab_help: '5. Bantuan', sec_language: 'Bahasa',
+        sec_api: 'Konfigurasi & Validasi API', provider: 'Penyedia', base_url: 'URL Dasar', api_key: 'Kunci API',
+        validate_btn: 'Validasi & Ambil Model', model_name: 'Nama Model', thinking_level: 'Tingkat Berpikir',
+        sec_memory: 'Memori & Bahasa', focus_areas: 'Fokus Pengajar', file_naming: 'Pola Nama File',
+        chat_style: 'Gaya Obrolan', storage_duration: 'Durasi Penyimpanan', language: 'Bahasa',
+        sec_theme: 'Mode Terang / Gelap', theme_title: 'Tampilan Antarmuka', theme_desc: 'Beralih antara tema terang dan gelap',
+        sec_help: 'Bantuan & Dukungan', help_desc: 'Butuh bantuan untuk rencana pelajaran atau konfigurasi API?',
+        help_contact: 'Email Dukungan:', save: 'Simpan Pengaturan',
+        welcome_title: 'Siap menyiapkan pelajaran berikutnya?', welcome_sub: 'Pilih saran buku pelajaran di bawah atau ketik topik Anda.',
+        search_placeholder: 'Cari riwayat...', prompt_placeholder: 'Tuliskan mata pelajaran, kelas, buku teks, dan topik...',
+        focus_placeholder: 'Contoh: IPA Kelas 7 Kurikulum Merdeka, praktikum', naming_placeholder: '{title}_{date}',
+        style_placeholder: 'Jelas, terstruktur, siap mengajar', api_key_placeholder: 'Masukkan kunci API Anda', base_url_placeholder: 'https://api.openai.com/v1',
+        folder_name_placeholder: 'Nama folder baru...', std_code_ph: 'Kode CP/ATP', std_subj_ph: 'Mata Pelajaran',
+        std_grade_ph: 'Jenjang Kelas', std_title_ph: 'Judul Standar', std_obj_ph: 'Tujuan pembelajaran...', add_standard: 'Tambah ke Folder',
+        copy: 'Salin', compose: 'Ubah', regenerate: 'Buat Ulang', download: 'Unduh', thinking_proc: 'Proses Berpikir',
+        pin: 'Sematkan', unpin: 'Lepas Sematan', rename: 'Ubah Nama', del: 'Hapus', close: 'Tutup', cancel: 'Batal',
+        light: 'Terang', dark: 'Gelap', not_validated: 'Belum divalidasi',
+        suggestions: [
+          { label: 'Erlangga · IPA Kelas 7: Zat dan Perubahannya (45 mnt)', prompt: 'Buat RPP 45 menit IPA Kelas 7 tentang Zat dan Perubahannya sesuai Kurikulum Merdeka dan buku Erlangga.' },
+          { label: 'Kemendikbudristek · Matematika SD Kelas 5: Pecahan', prompt: 'Susun aktivitas kelas dan kuis singkat Matematika SD Kelas 5 tentang pecahan.' }
+        ]
+      }
+    };
+
+    const state = {
+      settings: { provider: 'openai', base_url: 'https://api.openai.com/v1', api_key: '', model: '', thinking_level: 'default', storage_duration_days: 30, language: 'en', theme: 'light', help_email: 'teacher-support@example.com' },
+      memory: { focus_areas: '', file_naming: '{title}_{date}', chat_style: '' },
+      chats: [],
+      activeChat: null,
+      folders: [],
+      activeFolderId: 'builtin',
+      modelsList: [],
+      thinkingLevelsMap: {},
+      quotedText: '',
+      streaming: false
+    };
+
+    const lsGet = (k, fallback) => { try { const v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch { return fallback; } };
+    const lsSet = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+    const t = (key) => (I18N[state.settings.language] || I18N.en)[key] || I18N.en[key] || key;
+
+    function inferThinkingLevels(provider, modelId) {
+      const m = (modelId || '').toLowerCase();
+      if (provider === 'google_ai_studio') {
+        return (m.includes('2.5') || m.includes('3.') || m.includes('thinking')) ? ['default', 'off', 'low', 'medium', 'high'] : ['default'];
+      }
+      if (provider === 'openai') {
+        return (m.includes('o1') || m.includes('o3') || m.includes('o4') || m.includes('gpt-5')) ? ['default', 'low', 'medium', 'high'] : ['default'];
+      }
+      if (provider === 'deepseek') {
+        return (m.includes('reasoner') || m.includes('r1')) ? ['default', 'low', 'medium', 'high'] : ['default'];
+      }
+      return ['default'];
+    }
+
+    function populateThinkingOptions(modelId) {
+      const sel = document.getElementById('set-thinking');
+      const prov = document.getElementById('set-provider').value;
+      const levels = state.thinkingLevelsMap[modelId] || inferThinkingLevels(prov, modelId);
+      const prev = state.settings.thinking_level || 'default';
+      sel.innerHTML = levels.map(lv => `<option value="${lv}">${lv === 'default' ? 'Model Default' : lv.charAt(0).toUpperCase() + lv.slice(1)}</option>`).join('');
+      sel.value = levels.includes(prev) ? prev : 'default';
+    }
+
+    function serializeChatMd(chat) {
+      const lines = [
+        '---',
+        `id: ${chat.id}`,
+        `title: ${(chat.title || t('new_chat_title')).replace(/\n/g, ' ')}`,
+        `pinned: ${chat.pinned ? 'true' : 'false'}`,
+        `created_at: ${(chat.created_at || Date.now() / 1000).toFixed(3)}`,
+        `updated_at: ${(chat.updated_at || Date.now() / 1000).toFixed(3)}`,
+        '---',
+        ''
+      ];
+      for (const m of (chat.messages || [])) {
+        const role = m.role === 'user' ? 'USER' : 'ASSISTANT';
+        lines.push(`### [${role}]`);
+        if (role === 'ASSISTANT' && m.thinking && m.thinking.trim()) {
+          lines.push(`<thinking>\n${m.thinking.trim()}\n</thinking>`);
+        }
+        lines.push((m.content || '').trim(), '');
+      }
+      return lines.join('\n');
+    }
+
+    function parseChatMd(raw) {
+      const metaRe = /^---\s*\nid:\s*([^\n]+)\ntitle:\s*([^\n]+)\npinned:\s*(true|false)\ncreated_at:\s*(\d+(?:\.\d+)?)\nupdated_at:\s*(\d+(?:\.\d+)?)\n---\s*\n?/;
+      const m = raw.match(metaRe);
+      if (!m) return null;
+      const body = raw.slice(m[0].length);
+      const blockRe = /### \[(USER|ASSISTANT)\]\s*\n([\s\S]*?)(?=\n### \[(?:USER|ASSISTANT)\]|$)/g;
+      const messages = [];
+      let bm;
+      while ((bm = blockRe.exec(body)) !== null) {
+        const role = bm[1] === 'USER' ? 'user' : 'assistant';
+        let text = bm[2].trim();
+        let thinking = '';
+        if (role === 'assistant') {
+          const tm = text.match(/<thinking>\s*([\s\S]*?)\s*<\/thinking>\s*/);
+          if (tm) {
+            thinking = tm[1].trim();
+            text = text.replace(tm[0], '').trim();
+          }
+        }
+        messages.push({ role, thinking, content: text });
+      }
+      return { id: m[1].trim(), title: m[2].trim(), pinned: m[3] === 'true', created_at: parseFloat(m[4]), updated_at: parseFloat(m[5]), messages };
+    }
+
+    function showToast(msg) {
+      const el = document.getElementById('toast');
+      el.textContent = msg;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 2400);
+    }
+
+    function applyTheme() {
+      const isDark = state.settings.theme === 'dark';
+      document.documentElement.classList.toggle('dark', isDark);
+      document.getElementById('theme-label').textContent = isDark ? t('dark') : t('light');
+    }
+
+    function applyLanguage() {
+      document.documentElement.lang = state.settings.language || 'en';
+      document.querySelectorAll('[data-i18n]').forEach(el => {
+        const key = el.getAttribute('data-i18n');
+        el.textContent = t(key);
+      });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+        const key = el.getAttribute('data-i18n-placeholder');
+        el.setAttribute('placeholder', t(key));
+      });
+      applyTheme();
+      if (state.activeChat && state.activeChat.messages.length === 0) {
+        state.activeChat.title = t('new_chat_title');
+      }
+      renderChat();
+    }
+
+
+
+    function renderMarkdown(text) {
+      let html = (text || '')
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>');
+      html = html.replace(/(<li>[\s\S]*?<\/li>)/g, '<ul>$1</ul>').replace(/<\/ul>\s*<ul>/g, '');
+      return html.split('\n').map(l => l.startsWith('<h') || l.startsWith('<ul') || l.startsWith('<li') || l.startsWith('<blockquote') ? l : (l.trim() ? `<p>${l}</p>` : '')).join('');
+    }
+
+    function copyText(text) {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text).then(() => showToast(t('copy'))).catch(() => fallbackCopy(text));
+      } else fallbackCopy(text);
+    }
+
+    function fallbackCopy(text) {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); showToast(t('copy')); } catch {}
+      ta.remove();
+    }
+
+    function saveLocalChat(chat) {
+      chat.updated_at = Date.now() / 1000;
+      const store = lsGet('aiforteachers_md_chats', {});
+      store[chat.id] = serializeChatMd(chat);
+      lsSet('aiforteachers_md_chats', store);
+    }
+
+    function loadLocalChats(query = '') {
+      const store = lsGet('aiforteachers_md_chats', {});
+      const days = Number(state.settings.storage_duration_days || 0);
+      const cutoff = days > 0 ? (Date.now() / 1000) - days * 86400 : null;
+      const q = query.toLowerCase().trim();
+      const list = [];
+      let changed = false;
+      for (const [id, raw] of Object.entries(store)) {
+        const parsed = parseChatMd(raw);
+        if (!parsed) continue;
+        if (cutoff && !parsed.pinned && parsed.updated_at < cutoff) { delete store[id]; changed = true; continue; }
+        if (q) {
+          const hay = (parsed.title + ' ' + parsed.messages.map(m => m.content).join(' ')).toLowerCase();
+          if (!hay.includes(q)) continue;
+        }
+        list.push(parsed);
+      }
+      if (changed) lsSet('aiforteachers_md_chats', store);
+      list.sort((a, b) => (b.pinned - a.pinned) || (b.updated_at - a.updated_at));
+      return list;
+    }
+
+    async function refreshHistory(query = '') {
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch(`/api/chats?q=${encodeURIComponent(query)}`);
+          if (res.ok) { state.chats = (await res.json()).chats; renderHistory(); return; }
+        } catch {}
+      }
+      state.chats = loadLocalChats(query);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const listEl = document.getElementById('history-list');
+      listEl.innerHTML = '';
+      state.chats.forEach(chat => {
+        const row = document.createElement('div');
+        const isActive = state.activeChat && state.activeChat.id === chat.id;
+        row.className = `group flex items-center justify-between gap-1 px-2.5 py-2 rounded-xl text-sm cursor-pointer transition ${isActive ? 'bg-blue-100/80 dark:bg-blue-950/60 text-blue-900 dark:text-blue-100 font-medium' : 'hover:bg-slate-200/70 dark:hover:bg-slate-800/70'}`;
+
+        const titleBtn = document.createElement('button');
+        titleBtn.className = 'flex items-center gap-2 min-w-0 flex-1 text-left';
+        titleBtn.innerHTML = `${chat.pinned ? '<i data-lucide="pin" class="w-3.5 h-3.5 text-blue-600 shrink-0"></i>' : '<i data-lucide="message-square" class="w-3.5 h-3.5 opacity-60 shrink-0"></i>'}<span class="truncate">${chat.title.replace(/</g, '&lt;')}</span>`;
+        titleBtn.addEventListener('click', () => openChat(chat.id));
+
+        const moreBtn = document.createElement('button');
+        moreBtn.className = 'p-1 rounded-lg opacity-0 group-hover:opacity-100 hover:bg-slate-300/60 dark:hover:bg-slate-700 transition shrink-0';
+        moreBtn.innerHTML = '<i data-lucide="more-vertical" class="w-3.5 h-3.5"></i>';
+        moreBtn.addEventListener('click', (e) => { e.stopPropagation(); openChatActionsModal(chat); });
+
+        row.appendChild(titleBtn);
+        row.appendChild(moreBtn);
+        listEl.appendChild(row);
+      });
+      lucide.createIcons();
+    }
+
+    function openChatActionsModal(chat) {
+      const modal = document.getElementById('action-modal');
+      document.getElementById('action-modal-title').textContent = chat.title;
+      document.getElementById('action-modal-body').innerHTML = `
+        <div class="space-y-2">
+          <button id="act-pin" class="w-full px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 text-left text-sm flex items-center gap-2">
+            <i data-lucide="pin" class="w-4 h-4"></i> ${chat.pinned ? t('unpin') : t('pin')}
+          </button>
+          <div class="flex gap-2">
+            <input id="act-rename-input" type="text" class="flex-1 px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-sm" value="${chat.title.replace(/"/g, '&quot;')}" />
+            <button id="act-rename-btn" class="px-3 py-2 rounded-xl bg-blue-600 text-white text-sm font-medium">${t('rename')}</button>
+          </div>
+          <button id="act-delete" class="w-full px-3 py-2 rounded-xl border border-red-200 dark:border-red-900 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 text-left text-sm flex items-center gap-2">
+            <i data-lucide="trash-2" class="w-4 h-4"></i> ${t('del')}
+          </button>
+        </div>`;
+      document.getElementById('action-modal-footer').innerHTML = `<button id="act-close" class="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">${t('close')}</button>`;
+      modal.classList.remove('hidden');
+      lucide.createIcons();
+
+      const close = () => modal.classList.add('hidden');
+      document.getElementById('act-close').addEventListener('click', close);
+      document.getElementById('act-pin').addEventListener('click', async () => { await patchChatMeta(chat.id, { pinned: !chat.pinned }); close(); });
+      document.getElementById('act-rename-btn').addEventListener('click', async () => {
+        const title = document.getElementById('act-rename-input').value.trim();
+        if (title) await patchChatMeta(chat.id, { title });
+        close();
+      });
+      document.getElementById('act-delete').addEventListener('click', async () => { await deleteChatById(chat.id); close(); });
+    }
+
+    async function patchChatMeta(chatId, patch) {
+      if (!IS_CANVAS) {
+        try { await fetch(`/api/chats/${chatId}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) }); } catch {}
+      }
+      const store = lsGet('aiforteachers_md_chats', {});
+      if (store[chatId]) {
+        const c = parseChatMd(store[chatId]);
+        if (c) {
+          if (patch.title !== undefined) c.title = patch.title;
+          if (patch.pinned !== undefined) c.pinned = patch.pinned;
+          saveLocalChat(c);
+          if (state.activeChat && state.activeChat.id === chatId) {
+            state.activeChat.title = c.title;
+            document.getElementById('chat-title').textContent = c.title;
+          }
+        }
+      }
+      await refreshHistory(document.getElementById('search-input').value);
+    }
+
+    async function deleteChatById(chatId) {
+      if (!IS_CANVAS) {
+        try { await fetch(`/api/chats/${chatId}`, { method: 'DELETE' }); } catch {}
+      }
+      const store = lsGet('aiforteachers_md_chats', {});
+      delete store[chatId];
+      lsSet('aiforteachers_md_chats', store);
+      if (state.activeChat && state.activeChat.id === chatId) startNewChat();
+      await refreshHistory(document.getElementById('search-input').value);
+    }
+
+    async function openChat(chatId) {
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch(`/api/chats/${chatId}`);
+          if (res.ok) { state.activeChat = await res.json(); renderChat(); renderHistory(); return; }
+        } catch {}
+      }
+      const store = lsGet('aiforteachers_md_chats', {});
+      if (store[chatId]) { state.activeChat = parseChatMd(store[chatId]); renderChat(); renderHistory(); }
+    }
+
+    function startNewChat() {
+      state.activeChat = {
+        id: 'chat_' + Math.random().toString(36).slice(2, 10),
+        title: t('new_chat_title'),
+        pinned: false,
+        created_at: Date.now() / 1000,
+        updated_at: Date.now() / 1000,
+        messages: []
+      };
+      renderChat();
+      renderHistory();
+    }
+
+    function renderChat() {
+      const container = document.getElementById('chat-container');
+      const titleEl = document.getElementById('chat-title');
+      titleEl.textContent = state.activeChat?.title || t('new_chat_title');
+      container.innerHTML = '';
+
+      const msgs = state.activeChat?.messages || [];
+      if (msgs.length === 0) {
+        const dict = I18N[state.settings.language] || I18N.en;
+        const suggs = dict.suggestions || I18N.en.suggestions;
+        const cardsHtml = suggs.map(s =>
+          `<button class="sample-prompt p-3 rounded-xl border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-900 text-xs text-left transition" data-prompt="${s.prompt.replace(/"/g, '&quot;')}">${s.label}</button>`
+        ).join('');
+        container.innerHTML = `
+          <div class="py-10 text-center space-y-4">
+            <div class="w-12 h-12 mx-auto rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold text-xl shadow-sm">A</div>
+            <h2 class="text-2xl font-semibold tracking-tight">${dict.welcome_title}</h2>
+            <p class="text-sm text-slate-500 dark:text-slate-400">${dict.welcome_sub}</p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-w-2xl mx-auto pt-4">${cardsHtml}</div>
+          </div>`;
+        container.querySelectorAll('.sample-prompt').forEach(btn => {
+          btn.addEventListener('click', () => {
+            document.getElementById('prompt-input').value = btn.getAttribute('data-prompt');
+            sendPrompt();
+          });
+        });
+        return;
+      }
+
+      msgs.forEach((msg, idx) => {
+        const wrap = document.createElement('div');
+        if (msg.role === 'user') {
+          wrap.className = 'flex flex-col items-end gap-1.5';
+          wrap.innerHTML = `
+            <div class="max-w-[85%] px-4 py-3 rounded-2xl rounded-tr-sm bg-blue-600 text-white text-sm whitespace-pre-wrap">${msg.content.replace(/</g, '&lt;')}</div>
+            <div class="flex items-center gap-1 text-xs text-slate-400">
+              <button class="btn-copy-prompt px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"><i data-lucide="copy" class="w-3.5 h-3.5"></i> ${t('copy')}</button>
+              <button class="btn-compose-prompt px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"><i data-lucide="pencil" class="w-3.5 h-3.5"></i> ${t('compose')}</button>
+            </div>`;
+          wrap.querySelector('.btn-copy-prompt').addEventListener('click', () => copyText(msg.content));
+          wrap.querySelector('.btn-compose-prompt').addEventListener('click', () => {
+            const input = document.getElementById('prompt-input');
+            input.value = msg.content;
+            input.focus();
+          });
+        } else {
+          wrap.className = 'flex flex-col items-start gap-2';
+          const thinkHtml = msg.thinking ? `
+            <details class="w-full rounded-xl bg-slate-100/80 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-3.5 py-2 text-xs text-slate-600 dark:text-slate-400" ${idx === msgs.length - 1 && state.streaming ? 'open' : ''}>
+              <summary class="cursor-pointer font-medium select-none flex items-center gap-1.5"><i data-lucide="sparkles" class="w-3.5 h-3.5 text-blue-500"></i> ${t('thinking_proc')}</summary>
+              <pre class="mt-2 whitespace-pre-wrap font-sans leading-relaxed">${msg.thinking.replace(/</g, '&lt;')}</pre>
+            </details>` : '';
+
+          wrap.innerHTML = `
+            ${thinkHtml}
+            <div class="ai-answer-body prose-body w-full text-sm text-slate-800 dark:text-slate-200 select-text">${renderMarkdown(msg.content)}</div>
+            <div class="flex items-center gap-1 text-xs text-slate-500 dark:text-slate-400">
+              <button class="btn-copy-ai px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"><i data-lucide="copy" class="w-3.5 h-3.5"></i> ${t('copy')}</button>
+              <button class="btn-regen-ai px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"><i data-lucide="rotate-cw" class="w-3.5 h-3.5"></i> ${t('regenerate')}</button>
+              <button class="btn-dl-ai px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-1"><i data-lucide="download" class="w-3.5 h-3.5"></i> ${t('download')}</button>
+            </div>`;
+          wrap.querySelector('.btn-copy-ai').addEventListener('click', () => copyText(msg.content));
+          wrap.querySelector('.btn-regen-ai').addEventListener('click', () => regenerateAt(idx));
+          wrap.querySelector('.btn-dl-ai').addEventListener('click', () => openDownloadModal(msg.content));
+        }
+        container.appendChild(wrap);
+      });
+      lucide.createIcons();
+      const scroll = document.getElementById('chat-scroll');
+      scroll.scrollTop = scroll.scrollHeight;
+    }
+
+    document.addEventListener('mouseup', () => {
+      const sel = window.getSelection();
+      const text = sel ? sel.toString().trim() : '';
+      if (!text || text.length < 3) return;
+      const anchor = sel.anchorNode?.parentElement?.closest('.ai-answer-body');
+      if (!anchor) return;
+      state.quotedText = text;
+      document.getElementById('quote-preview').textContent = text;
+      document.getElementById('quote-banner').classList.remove('hidden');
+      document.getElementById('prompt-input').focus();
+    });
+
+    function openDownloadModal(bodyText) {
+      const modal = document.getElementById('action-modal');
+      document.getElementById('action-modal-title').textContent = t('download');
+      document.getElementById('action-modal-body').innerHTML = `
+        <div class="grid grid-cols-3 gap-2 pt-1">
+          <button data-fmt="docx" class="dl-fmt py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium text-sm">.docx</button>
+          <button data-fmt="pdf" class="dl-fmt py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium text-sm">.pdf</button>
+          <button data-fmt="md" class="dl-fmt py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 font-medium text-sm">.md</button>
+        </div>`;
+      document.getElementById('action-modal-footer').innerHTML = `<button id="dl-close" class="px-3 py-1.5 rounded-lg text-xs text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">${t('cancel')}</button>`;
+      modal.classList.remove('hidden');
+      document.getElementById('dl-close').addEventListener('click', () => modal.classList.add('hidden'));
+      document.querySelectorAll('.dl-fmt').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const fmt = btn.getAttribute('data-fmt');
+          modal.classList.add('hidden');
+          await downloadExport(bodyText, fmt);
+        });
+      });
+    }
+
+    async function downloadExport(content, fmt) {
+      const title = state.activeChat?.title || 'Lesson Plan';
+      const dateStr = new Date().toISOString().slice(0, 10);
+      const pattern = (state.memory.file_naming || '{title}_{date}').replace('{title}', title.replace(/[^a-zA-Z0-9\u4e00-\u9fff_-]+/g, '_')).replace('{date}', dateStr);
+      const filename = `${pattern}.${fmt}`;
+
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch('/api/export', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, content, format: fmt }) });
+          if (res.ok) { triggerBlobDownload(await res.blob(), filename); return; }
+        } catch {}
+      }
+
+      if (fmt === 'md') {
+        triggerBlobDownload(new Blob([`# ${title}\n\n${content}\n`], { type: 'text/markdown;charset=utf-8' }), filename);
+      } else if (fmt === 'docx') {
+        const htmlDoc = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="utf-8"><title>${title}</title></head><body><h1>${title}</h1>${renderMarkdown(content)}</body></html>`;
+        triggerBlobDownload(new Blob([htmlDoc], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' }), filename);
+      } else if (fmt === 'pdf') {
+        const w = window.open('', '_blank');
+        if (w) {
+          w.document.write(`<html><head><title>${title}</title><style>body{font-family:sans-serif;max-width:740px;margin:40px auto;line-height:1.6}</style></head><body><h1>${title}</h1>${renderMarkdown(content)}</body></html>`);
+          w.document.close();
+          w.print();
+        }
+      }
+    }
+
+    function triggerBlobDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function regenerateAt(aiIdx) {
+      if (state.streaming) return;
+      const msgs = state.activeChat.messages;
+      let userPrompt = '';
+      for (let i = aiIdx - 1; i >= 0; i--) {
+        if (msgs[i].role === 'user') { userPrompt = msgs[i].content; break; }
+      }
+      if (!userPrompt) return;
+      state.activeChat.messages = msgs.slice(0, aiIdx);
+      await runAssistantStream(userPrompt);
+    }
+
+    async function sendPrompt() {
+      if (state.streaming) return;
+      const input = document.getElementById('prompt-input');
+      let raw = input.value.trim();
+      if (!raw) return;
+      if (state.quotedText) {
+        raw = `Regarding this passage:\n> ${state.quotedText}\n\n${raw}`;
+        state.quotedText = '';
+        document.getElementById('quote-banner').classList.add('hidden');
+      }
+      input.value = '';
+      if (state.activeChat.messages.length === 0) {
+        state.activeChat.title = raw.replace(/\s+/g, ' ').slice(0, 42);
+      }
+      state.activeChat.messages.push({ role: 'user', content: raw });
+      renderChat();
+      await runAssistantStream(raw);
+    }
+
+    async function runAssistantStream(prompt) {
+      state.streaming = true;
+      document.getElementById('btn-send').disabled = true;
+      const aiMsg = { role: 'assistant', thinking: '', content: '' };
+      state.activeChat.messages.push(aiMsg);
+      renderChat();
+
+      const useWeb = document.getElementById('toggle-web-search').checked;
+
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch('/api/chat/stream', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: state.activeChat.id, prompt, use_web_search: useWeb })
+          });
+          if (res.ok && res.body) {
+            const reader = res.body.getReader();
+            const decoder = new TextDecoder();
+            let buf = '';
+            while (true) {
+              const { value, done } = await reader.read();
+              if (done) break;
+              buf += decoder.decode(value, { stream: true });
+              const lines = buf.split('\n');
+              buf = lines.pop() || '';
+              for (const line of lines) {
+                if (!line.startsWith('data: ')) continue;
+                const evt = JSON.parse(line.slice(6));
+                if (evt.type === 'thinking') aiMsg.thinking += evt.delta;
+                else if (evt.type === 'content') aiMsg.content += evt.delta;
+                else if (evt.type === 'error') aiMsg.content += `\n\n> Error: ${evt.message}`;
+                renderChat();
+              }
+            }
+            await persistActiveChat();
+            state.streaming = false;
+            document.getElementById('btn-send').disabled = false;
+            return;
+          }
+        } catch {}
+      }
+
+      // Direct browser live API streaming (when running standalone in Canvas)
+      const prov = state.settings.provider || 'openai';
+      const baseUrl = (state.settings.base_url || PROVIDERS[prov]?.baseUrl || '').replace(/\/$/, '');
+      const apiKey = (state.settings.api_key || '').trim();
+      const model = (state.settings.model || '').trim();
+      const thinkingLevel = state.settings.thinking_level || 'default';
+
+      if (!apiKey || !baseUrl || !model) {
+        aiMsg.content = '> API is not configured. Open **Settings → 1. API**, enter your Base URL and API Key, and click **Validate & Fetch Models** before chatting.';
+        renderChat();
+        await persistActiveChat();
+        state.streaming = false;
+        document.getElementById('btn-send').disabled = false;
+        return;
+      }
+
+      const low = prompt.toLowerCase();
+      const allStds = [...state.folders.flatMap(f => f.items.map(x => ({ ...x, folder: f.name }))), ...BUILTIN_STANDARDS];
+      const matches = allStds.filter(x => (x.keywords || []).some(k => low.includes(k)) || low.includes((x.subject || '').toLowerCase())).slice(0, 3);
+      const stdCtx = matches.length
+        ? 'Relevant Curriculum Standards:\n' + matches.map(m => `- [${m.id}] ${m.subject} (${m.grade_level}): ${m.title}`).join('\n')
+        : '';
+      const sysPrompt = [
+        'You are aiforteachers, an intelligent courseware and lesson-preparation assistant.',
+        'If the user prompt is unrelated to teaching, learning, or education, reply politely: "Sorry, this function is not available for now."',
+        `Respond in language code: ${state.settings.language || 'en'}.`,
+        state.memory.focus_areas ? `Teacher focus areas: ${state.memory.focus_areas}` : '',
+        state.memory.chat_style ? `Chat style: ${state.memory.chat_style}` : '',
+        stdCtx
+      ].filter(Boolean).join('\n\n');
+
+      const historyMsgs = state.activeChat.messages.slice(0, -1).slice(-8).map(m => ({ role: m.role, content: m.content }));
+
+      try {
+        if (prov === 'google_ai_studio') {
+          const contents = historyMsgs.map(m => ({ role: m.role === 'user' ? 'user' : 'model', parts: [{ text: m.content }] }));
+          const body = { systemInstruction: { parts: [{ text: sysPrompt }] }, contents };
+          if (thinkingLevel && thinkingLevel !== 'default') {
+            const budgetMap = { off: 0, low: 1024, medium: 2048, high: 4096 };
+            body.generationConfig = { thinkingConfig: { thinkingBudget: budgetMap[thinkingLevel] ?? 1024 } };
+          }
+          const resp = await fetch(`${baseUrl}/models/${encodeURIComponent(model)}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const evt = JSON.parse(line.slice(6));
+              for (const cand of (evt.candidates || [])) {
+                for (const part of (cand.content?.parts || [])) {
+                  if (part.thought) aiMsg.thinking += (part.text || '');
+                  else if (part.text) aiMsg.content += part.text;
+                }
+              }
+              renderChat();
+            }
+          }
+        } else {
+          const body = { model, messages: [{ role: 'system', content: sysPrompt }, ...historyMsgs], stream: true };
+          if (['low', 'medium', 'high'].includes(thinkingLevel)) body.reasoning_effort = thinkingLevel;
+          const resp = await fetch(`${baseUrl}/chat/completions`, {
+            method: 'POST',
+            headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+            body: JSON.stringify(body)
+          });
+          if (!resp.ok) throw new Error(`HTTP ${resp.status}: ${await resp.text()}`);
+          const reader = resp.body.getReader();
+          const decoder = new TextDecoder();
+          let buf = '';
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            buf += decoder.decode(value, { stream: true });
+            const lines = buf.split('\n');
+            buf = lines.pop() || '';
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              const raw = line.slice(6).trim();
+              if (raw === '[DONE]') break;
+              const evt = JSON.parse(raw);
+              for (const ch of (evt.choices || [])) {
+                const d = ch.delta || {};
+                if (d.reasoning_content) aiMsg.thinking += d.reasoning_content;
+                if (d.content) aiMsg.content += d.content;
+              }
+              renderChat();
+            }
+          }
+        }
+      } catch (err) {
+        aiMsg.content = `> API Error: ${err.message}`;
+        renderChat();
+      }
+      await persistActiveChat();
+      state.streaming = false;
+      document.getElementById('btn-send').disabled = false;
+    }
+
+    async function persistActiveChat() {
+      saveLocalChat(state.activeChat);
+      if (!IS_CANVAS) {
+        try { await fetch('/api/chats', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.activeChat) }); } catch {}
+      }
+      await refreshHistory(document.getElementById('search-input').value);
+    }
+
+    // Validate URL + API key, fetch live models, and validate thinking level
+    async function validateAndFetchModels() {
+      const prov = document.getElementById('set-provider').value;
+      const baseUrl = document.getElementById('set-base-url').value.trim().replace(/\/$/, '');
+      const apiKey = document.getElementById('set-api-key').value.trim();
+      const statusEl = document.getElementById('api-validation-status');
+      const thinkStatusEl = document.getElementById('thinking-validation-status');
+      const modelSel = document.getElementById('set-model');
+      const currentThinking = document.getElementById('set-thinking').value || state.settings.thinking_level || 'default';
+
+      if (!baseUrl || !apiKey) {
+        statusEl.textContent = t('not_validated');
+        statusEl.className = 'text-xs text-slate-500 dark:text-slate-400';
+        thinkStatusEl.textContent = '';
+        modelSel.innerHTML = state.settings.model ? `<option value="${state.settings.model}">${state.settings.model}</option>` : '<option value="">— Validate to fetch models —</option>';
+        populateThinkingOptions(modelSel.value);
+        return;
+      }
+
+      statusEl.textContent = 'Validating...';
+      statusEl.className = 'text-xs text-blue-600 dark:text-blue-400';
+      thinkStatusEl.textContent = '';
+
+      let result = null;
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch('/api/models/validate', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ provider: prov, api_key: apiKey, base_url: baseUrl, model: modelSel.value, thinking_level: currentThinking })
+          });
+          if (res.ok) result = await res.json();
+        } catch {}
+      } else {
+        try {
+          let models = [];
+          const tMap = {};
+          if (prov === 'google_ai_studio') {
+            const r = await fetch(`${baseUrl}/models?key=${encodeURIComponent(apiKey)}`);
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const d = await r.json();
+            models = (d.models || []).filter(x => (x.supportedGenerationMethods || []).includes('generateContent')).map(x => x.name.replace('models/', ''));
+          } else {
+            const r = await fetch(`${baseUrl}/models`, { headers: { Authorization: `Bearer ${apiKey}` } });
+            if (!r.ok) throw new Error(`HTTP ${r.status}`);
+            const d = await r.json();
+            models = (d.data || []).map(x => x.id).filter(Boolean);
+          }
+          models.forEach(m => { tMap[m] = inferThinkingLevels(prov, m); });
+          const targetModel = models.includes(modelSel.value) ? modelSel.value : (models[0] || '');
+          let thinkingValidated = true;
+          let thinkingNote = 'Model default';
+
+          if (targetModel && currentThinking !== 'default') {
+            if (prov === 'google_ai_studio') {
+              const budgetMap = { off: 0, low: 1024, medium: 2048, high: 4096 };
+              const pr = await fetch(`${baseUrl}/models/${encodeURIComponent(targetModel)}:generateContent?key=${encodeURIComponent(apiKey)}`, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ok' }] }], generationConfig: { maxOutputTokens: 1, thinkingConfig: { thinkingBudget: budgetMap[currentThinking] ?? 1024 } } })
+              });
+              thinkingValidated = pr.ok;
+              thinkingNote = pr.ok ? `✓ Thinking '${currentThinking}' verified` : `✗ Thinking '${currentThinking}' unsupported (HTTP ${pr.status})`;
+            } else {
+              const pr = await fetch(`${baseUrl}/chat/completions`, {
+                method: 'POST', headers: { Authorization: `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ model: targetModel, messages: [{ role: 'user', content: 'ok' }], max_tokens: 1, reasoning_effort: currentThinking })
+              });
+              thinkingValidated = pr.ok;
+              thinkingNote = pr.ok ? `✓ Thinking '${currentThinking}' verified` : `✗ Thinking '${currentThinking}' unsupported (HTTP ${pr.status})`;
+            }
+          }
+          result = { valid: true, models, thinking_levels: tMap, thinking_validated: thinkingValidated, thinking_note: thinkingNote };
+        } catch (err) {
+          result = { valid: false, models: [], thinking_levels: {}, thinking_validated: false, error: err.message };
+        }
+      }
+
+      if (result && result.valid && result.models.length > 0) {
+        state.modelsList = result.models;
+        state.thinkingLevelsMap = result.thinking_levels || {};
+        const prev = state.settings.model;
+        modelSel.innerHTML = result.models.map(m => `<option value="${m}">${m}</option>`).join('');
+        modelSel.value = result.models.includes(prev) ? prev : result.models[0];
+        populateThinkingOptions(modelSel.value);
+        statusEl.textContent = `✓ ${result.models.length} models loaded`;
+        statusEl.className = 'text-xs text-emerald-600 dark:text-emerald-400 font-medium';
+        thinkStatusEl.textContent = result.thinking_note || '';
+        thinkStatusEl.className = `block mt-1 text-[11px] ${result.thinking_validated ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-600 dark:text-amber-400'}`;
+      } else {
+        statusEl.textContent = `✗ ${result?.error || 'Validation failed'}`;
+        statusEl.className = 'text-xs text-red-600 dark:text-red-400';
+      }
+    }
+
+    // Curriculum Standards Folders Management
+    async function loadFolders() {
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch('/api/standards/folders');
+          if (res.ok) { state.folders = (await res.json()).folders; renderFolders(); return; }
+        } catch {}
+      }
+      state.folders = lsGet('aiforteachers_std_folders', []);
+      renderFolders();
+    }
+
+    function renderFolders() {
+      const flist = document.getElementById('folder-list');
+      flist.innerHTML = '';
+
+      const builtinBtn = document.createElement('button');
+      builtinBtn.className = `w-full px-2.5 py-2 rounded-lg text-xs font-medium text-left flex items-center gap-2 ${state.activeFolderId === 'builtin' ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-200' : 'hover:bg-slate-200/70 dark:hover:bg-slate-800'}`;
+      builtinBtn.innerHTML = `<i data-lucide="book-open" class="w-3.5 h-3.5 shrink-0"></i><span class="truncate">Built-in Standards</span>`;
+      builtinBtn.addEventListener('click', () => { state.activeFolderId = 'builtin'; renderFolders(); });
+      flist.appendChild(builtinBtn);
+
+      state.folders.forEach(f => {
+        const row = document.createElement('div');
+        row.className = `group flex items-center justify-between gap-1 px-2.5 py-2 rounded-lg text-xs font-medium cursor-pointer ${state.activeFolderId === f.id ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-200' : 'hover:bg-slate-200/70 dark:hover:bg-slate-800'}`;
+        row.innerHTML = `<div class="flex items-center gap-2 min-w-0 flex-1"><i data-lucide="folder" class="w-3.5 h-3.5 shrink-0"></i><span class="truncate">${f.name.replace(/</g, '&lt;')} (${f.items.length})</span></div><button class="del-fld opacity-0 group-hover:opacity-100 text-red-500 p-0.5"><i data-lucide="trash-2" class="w-3 h-3"></i></button>`;
+        row.addEventListener('click', () => { state.activeFolderId = f.id; renderFolders(); });
+        row.querySelector('.del-fld').addEventListener('click', async (e) => {
+          e.stopPropagation();
+          await deleteFolder(f.id);
+        });
+        flist.appendChild(row);
+      });
+
+      const titleEl = document.getElementById('active-folder-title');
+      const formEl = document.getElementById('add-standard-form');
+      const itemsEl = document.getElementById('folder-items-list');
+
+      if (state.activeFolderId === 'builtin') {
+        titleEl.textContent = 'Built-in Standards';
+        formEl.classList.add('hidden');
+        itemsEl.innerHTML = BUILTIN_STANDARDS.map(s => `
+          <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs space-y-1">
+            <div class="font-semibold">[${s.id}] ${s.title}</div>
+            <div class="text-slate-500 dark:text-slate-400">${s.subject} · ${s.grade_level}</div>
+          </div>`).join('');
+      } else {
+        const fld = state.folders.find(x => x.id === state.activeFolderId);
+        if (!fld) { state.activeFolderId = 'builtin'; renderFolders(); return; }
+        titleEl.textContent = fld.name;
+        formEl.classList.remove('hidden');
+        itemsEl.innerHTML = fld.items.length ? fld.items.map(s => `
+          <div class="p-3 rounded-xl border border-slate-200 dark:border-slate-800 text-xs flex items-start justify-between gap-2">
+            <div>
+              <div class="font-semibold">[${s.id}] ${s.title.replace(/</g, '&lt;')}</div>
+              <div class="text-slate-500 dark:text-slate-400">${s.subject.replace(/</g, '&lt;')} · ${s.grade_level.replace(/</g, '&lt;')}</div>
+            </div>
+            <button data-std="${s.id}" class="del-std text-red-500 p-1 hover:bg-red-50 dark:hover:bg-red-950/30 rounded"><i data-lucide="trash-2" class="w-3.5 h-3.5"></i></button>
+          </div>`).join('') : '<p class="text-xs text-slate-400">No standards in this folder yet.</p>';
+        itemsEl.querySelectorAll('.del-std').forEach(btn => {
+          btn.addEventListener('click', () => deleteStandardFromFolder(fld.id, btn.getAttribute('data-std')));
+        });
+      }
+      lucide.createIcons();
+    }
+
+    async function createFolder() {
+      const inp = document.getElementById('new-folder-name');
+      const name = inp.value.trim();
+      if (!name) return;
+      inp.value = '';
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch('/api/standards/folders', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }) });
+          if (res.ok) { const fld = await res.json(); state.activeFolderId = fld.id; await loadFolders(); return; }
+        } catch {}
+      }
+      const fld = { id: 'fld_' + Math.random().toString(36).slice(2, 8), name, items: [] };
+      state.folders.push(fld);
+      lsSet('aiforteachers_std_folders', state.folders);
+      state.activeFolderId = fld.id;
+      renderFolders();
+    }
+
+    async function deleteFolder(folderId) {
+      if (!IS_CANVAS) {
+        try { await fetch(`/api/standards/folders/${folderId}`, { method: 'DELETE' }); } catch {}
+      }
+      state.folders = state.folders.filter(f => f.id !== folderId);
+      lsSet('aiforteachers_std_folders', state.folders);
+      if (state.activeFolderId === folderId) state.activeFolderId = 'builtin';
+      renderFolders();
+    }
+
+    async function addStandardToFolder() {
+      const fldId = state.activeFolderId;
+      if (fldId === 'builtin') return;
+      const payload = {
+        code: document.getElementById('std-code').value.trim(),
+        subject: document.getElementById('std-subject').value.trim() || 'General',
+        grade_level: document.getElementById('std-grade').value.trim() || 'All Grades',
+        title: document.getElementById('std-title').value.trim() || 'Untitled Standard',
+        objectives: [document.getElementById('std-obj').value.trim()].filter(Boolean)
+      };
+      if (!IS_CANVAS) {
+        try {
+          const res = await fetch(`/api/standards/folders/${fldId}/items`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          if (res.ok) { ['std-code', 'std-subject', 'std-grade', 'std-title', 'std-obj'].forEach(id => document.getElementById(id).value = ''); await loadFolders(); return; }
+        } catch {}
+      }
+      const fld = state.folders.find(f => f.id === fldId);
+      if (fld) {
+        fld.items.push({
+          id: payload.code || 'STD-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
+          subject: payload.subject,
+          grade_level: payload.grade_level,
+          title: payload.title,
+          objectives: payload.objectives,
+          keywords: (payload.subject + ' ' + payload.title).toLowerCase().split(/\s+/)
+        });
+        lsSet('aiforteachers_std_folders', state.folders);
+        ['std-code', 'std-subject', 'std-grade', 'std-title', 'std-obj'].forEach(id => document.getElementById(id).value = '');
+        renderFolders();
+      }
+    }
+
+    async function deleteStandardFromFolder(folderId, stdId) {
+      if (!IS_CANVAS) {
+        try { await fetch(`/api/standards/folders/${folderId}/items/${stdId}`, { method: 'DELETE' }); } catch {}
+      }
+      const fld = state.folders.find(f => f.id === folderId);
+      if (fld) {
+        fld.items = fld.items.filter(s => s.id !== stdId);
+        lsSet('aiforteachers_std_folders', state.folders);
+        renderFolders();
+      }
+    }
+
+    function switchSettingsTab(tabName) {
+      document.querySelectorAll('.settings-tab').forEach(btn => {
+        const active = btn.getAttribute('data-tab') === tabName;
+        btn.className = `settings-tab flex items-center gap-2.5 px-3 py-2.5 rounded-xl text-xs sm:text-sm font-medium text-left whitespace-nowrap transition ${active ? 'bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-200' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200/70 dark:hover:bg-slate-800'}`;
+      });
+      document.querySelectorAll('.settings-panel').forEach(p => {
+        p.classList.toggle('hidden', p.id !== `panel-${tabName}`);
+      });
+    }
+
+    async function init() {
+      const provSel = document.getElementById('set-provider');
+      provSel.innerHTML = Object.entries(PROVIDERS).map(([k, v]) => `<option value="${k}">${v.label}</option>`).join('');
+
+      if (!IS_CANVAS) {
+        try {
+          const [sRes, mRes] = await Promise.all([fetch('/api/settings'), fetch('/api/memory')]);
+          if (sRes.ok) state.settings = { ...state.settings, ...(await sRes.json()) };
+          if (mRes.ok) state.memory = { ...state.memory, ...(await mRes.json()) };
+        } catch {}
+      } else {
+        state.settings = { ...state.settings, ...lsGet('aiforteachers_settings', {}) };
+        state.memory = { ...state.memory, ...lsGet('aiforteachers_memory', {}) };
+      }
+
+      if (!PROVIDERS[state.settings.provider]) state.settings.provider = 'openai';
+      document.getElementById('set-provider').value = state.settings.provider;
+      document.getElementById('set-base-url').value = state.settings.base_url || PROVIDERS[state.settings.provider].baseUrl;
+      document.getElementById('set-api-key').value = state.settings.api_key || '';
+      document.getElementById('set-storage-days').value = String(state.settings.storage_duration_days ?? 30);
+      document.getElementById('set-language').value = state.settings.language || 'en';
+      document.getElementById('mem-focus').value = state.memory.focus_areas || '';
+      document.getElementById('mem-naming').value = state.memory.file_naming || '{title}_{date}';
+      document.getElementById('mem-style').value = state.memory.chat_style || '';
+
+      startNewChat();
+      applyLanguage();
+      await validateAndFetchModels();
+      await refreshHistory();
+      await loadFolders();
+
+      // Sidebar & Chat events
+      document.getElementById('btn-search-toggle').addEventListener('click', () => {
+        document.getElementById('search-wrap').classList.toggle('hidden');
+        document.getElementById('search-input').focus();
+      });
+      document.getElementById('search-input').addEventListener('input', (e) => refreshHistory(e.target.value));
+      document.getElementById('btn-collapse').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.add('hidden');
+        document.getElementById('btn-expand').classList.remove('hidden');
+      });
+      document.getElementById('btn-expand').addEventListener('click', () => {
+        document.getElementById('sidebar').classList.remove('hidden');
+        document.getElementById('btn-expand').classList.add('hidden');
+      });
+      document.getElementById('btn-new-chat').addEventListener('click', startNewChat);
+      document.getElementById('btn-send').addEventListener('click', sendPrompt);
+      document.getElementById('prompt-input').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendPrompt(); }
+      });
+      document.getElementById('btn-clear-quote').addEventListener('click', () => {
+        state.quotedText = '';
+        document.getElementById('quote-banner').classList.add('hidden');
+      });
+
+      // Curriculum Standards Modal
+      document.getElementById('btn-standards').addEventListener('click', () => document.getElementById('standards-modal').classList.remove('hidden'));
+      document.getElementById('btn-close-standards').addEventListener('click', () => document.getElementById('standards-modal').classList.add('hidden'));
+      document.getElementById('btn-create-folder').addEventListener('click', createFolder);
+      document.getElementById('btn-add-standard').addEventListener('click', addStandardToFolder);
+
+      // Settings Modal & 4 Distinct Tabs
+      document.getElementById('btn-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.remove('hidden'));
+      document.getElementById('btn-close-settings').addEventListener('click', () => document.getElementById('settings-modal').classList.add('hidden'));
+      document.querySelectorAll('.settings-tab').forEach(btn => {
+        btn.addEventListener('click', () => switchSettingsTab(btn.getAttribute('data-tab')));
+      });
+
+      document.getElementById('set-provider').addEventListener('change', (e) => {
+        const p = e.target.value;
+        document.getElementById('set-base-url').value = PROVIDERS[p]?.baseUrl || '';
+        document.getElementById('api-validation-status').textContent = t('not_validated');
+      });
+      document.getElementById('btn-validate-api').addEventListener('click', validateAndFetchModels);
+      document.getElementById('set-model').addEventListener('change', (e) => { populateThinkingOptions(e.target.value); if (document.getElementById('set-api-key').value.trim()) validateAndFetchModels(); });
+      document.getElementById('set-thinking').addEventListener('change', () => { if (document.getElementById('set-api-key').value.trim()) validateAndFetchModels(); });
+
+      // Instant live language refresh on change
+      document.getElementById('set-language').addEventListener('change', (e) => {
+        state.settings.language = e.target.value;
+        lsSet('aiforteachers_settings', state.settings);
+        applyLanguage();
+      });
+
+      document.getElementById('btn-theme-toggle').addEventListener('click', () => {
+        state.settings.theme = state.settings.theme === 'dark' ? 'light' : 'dark';
+        applyTheme();
+      });
+
+      document.getElementById('btn-save-settings').addEventListener('click', async () => {
+        state.settings.provider = document.getElementById('set-provider').value;
+        state.settings.base_url = document.getElementById('set-base-url').value.trim();
+        state.settings.api_key = document.getElementById('set-api-key').value.trim();
+        state.settings.model = document.getElementById('set-model').value;
+        state.settings.thinking_level = document.getElementById('set-thinking').value || 'default';
+        state.settings.storage_duration_days = Number(document.getElementById('set-storage-days').value);
+        state.settings.language = document.getElementById('set-language').value;
+        state.memory.focus_areas = document.getElementById('mem-focus').value.trim();
+        state.memory.file_naming = document.getElementById('mem-naming').value.trim() || '{title}_{date}';
+        state.memory.chat_style = document.getElementById('mem-style').value.trim();
+
+        lsSet('aiforteachers_settings', state.settings);
+        lsSet('aiforteachers_memory', state.memory);
+        if (!IS_CANVAS) {
+          try {
+            await Promise.all([
+              fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.settings) }),
+              fetch('/api/memory', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(state.memory) })
+            ]);
+          } catch {}
+        }
+        applyLanguage();
+          await refreshHistory();
+        document.getElementById('settings-modal').classList.add('hidden');
+        showToast(t('save'));
+      });
+
+      lucide.createIcons();
+    }
+
+    window.addEventListener('DOMContentLoaded', init);
+  </script>
+</body>
+</html>

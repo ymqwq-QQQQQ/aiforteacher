@@ -1,0 +1,122 @@
+[
+  {
+    "id": "MATH-K5-OA1",
+    "subject": "Mathematics",
+    "grade_level": "Elementary (Grades K-5)",
+    "title": "Operations & Algebraic Thinking",
+    "objectives": [
+      "Represent and solve problems involving addition, subtraction, multiplication, and division.",
+      "Understand properties of operations and the relationship between addition/subtraction and multiplication/division.",
+      "Generate and analyze numerical patterns."
+    ],
+    "keywords": ["math", "addition", "subtraction", "multiplication", "division", "fractions", "elementary", "arithmetic"]
+  },
+  {
+    "id": "MATH-68-EE1",
+    "subject": "Mathematics",
+    "grade_level": "Middle School (Grades 6-8)",
+    "title": "Expressions, Equations & Linear Functions",
+    "objectives": [
+      "Apply and extend previous understandings of arithmetic to algebraic expressions.",
+      "Solve real-life and mathematical problems using numerical and algebraic expressions and equations.",
+      "Define, evaluate, and compare linear functions."
+    ],
+    "keywords": ["algebra", "equations", "expressions", "functions", "ratios", "proportions", "middle school", "math"]
+  },
+  {
+    "id": "MATH-912-CAL1",
+    "subject": "Mathematics",
+    "grade_level": "High School (Grades 9-12)",
+    "title": "Functions, Geometry & Modeling",
+    "objectives": [
+      "Interpret functions that arise in applications in terms of the context.",
+      "Build new functions from existing functions and construct linear, quadratic, and exponential models.",
+      "Apply geometric concepts in modeling situations and prove geometric theorems."
+    ],
+    "keywords": ["calculus", "trigonometry", "geometry", "quadratic", "exponential", "high school", "statistics", "math"]
+  },
+  {
+    "id": "SCI-K5-LS1",
+    "subject": "Science",
+    "grade_level": "Elementary (Grades K-5)",
+    "title": "From Molecules to Organisms & Ecosystems",
+    "objectives": [
+      "Use observations to describe patterns of what plants and animals need to survive.",
+      "Construct an argument that plants and animals have internal and external structures that function to support survival.",
+      "Develop a model to describe the movement of matter among plants, animals, decomposers, and the environment."
+    ],
+    "keywords": ["science", "biology", "plants", "animals", "ecosystems", "habitats", "elementary", "weather"]
+  },
+  {
+    "id": "SCI-68-PS1",
+    "subject": "Science",
+    "grade_level": "Middle School (Grades 6-8)",
+    "title": "Matter, Energy & Forces",
+    "objectives": [
+      "Develop models to describe the atomic composition of simple molecules and extended structures.",
+      "Analyze and interpret data on the properties of substances before and after chemical reactions.",
+      "Plan an investigation to provide evidence that the change in an object's motion depends on the sum of forces and mass."
+    ],
+    "keywords": ["physics", "chemistry", "matter", "energy", "atoms", "forces", "motion", "middle school", "science"]
+  },
+  {
+    "id": "SCI-912-PHY1",
+    "subject": "Science",
+    "grade_level": "High School (Grades 9-12)",
+    "title": "Physical & Life Sciences Inquiry",
+    "objectives": [
+      "Analyze data to support Newton's second law of motion and conservation of momentum.",
+      "Use mathematical representations to support claims for the cycling of matter and flow of energy among organisms.",
+      "Design a solution to a complex real-world problem by breaking it down into smaller, manageable engineering problems."
+    ],
+    "keywords": ["physics", "chemistry", "biology", "newton", "genetics", "thermodynamics", "high school", "science"]
+  },
+  {
+    "id": "ELA-K5-RL1",
+    "subject": "English Language Arts",
+    "grade_level": "Elementary (Grades K-5)",
+    "title": "Reading Comprehension & Foundational Writing",
+    "objectives": [
+      "Ask and answer questions to demonstrate understanding of a text, referring explicitly to the text as the basis for answers.",
+      "Determine the main idea of a text and recount key details.",
+      "Write opinion, informative/explanatory, and narrative pieces with clear structure."
+    ],
+    "keywords": ["reading", "writing", "english", "ela", "literacy", "phonics", "story", "comprehension", "elementary"]
+  },
+  {
+    "id": "ELA-68-W1",
+    "subject": "English Language Arts",
+    "grade_level": "Middle School (Grades 6-8)",
+    "title": "Argumentative & Analytical Writing",
+    "objectives": [
+      "Cite textual evidence to support analysis of what the text says explicitly as well as inferences drawn from the text.",
+      "Write arguments to support claims with clear reasons and relevant evidence.",
+      "Analyze how particular elements of a story or drama interact."
+    ],
+    "keywords": ["essay", "argument", "literature", "writing", "analysis", "english", "ela", "middle school"]
+  },
+  {
+    "id": "HIST-612-CIV1",
+    "subject": "Social Studies & History",
+    "grade_level": "Grades 6-12",
+    "title": "Historical Inquiry & Civic Reasoning",
+    "objectives": [
+      "Analyze multiple primary and secondary sources to evaluate historical perspectives and causation.",
+      "Explain how geographic, economic, and cultural factors shape societies over time.",
+      "Evaluate the roles of civic institutions, laws, and citizen participation in democratic societies."
+    ],
+    "keywords": ["history", "social studies", "civics", "geography", "economics", "primary source", "government"]
+  },
+  {
+    "id": "CS-K12-ALG1",
+    "subject": "Computer Science",
+    "grade_level": "Grades K-12",
+    "title": "Algorithms, Programming & Computational Thinking",
+    "objectives": [
+      "Decompose problems into smaller, manageable subproblems to facilitate program design.",
+      "Design and iteratively develop programs that combine control structures, variables, and functions.",
+      "Evaluate the impacts of computing technologies on society, ethics, and data privacy."
+    ],
+    "keywords": ["computer science", "coding", "programming", "python", "algorithms", "ai", "logic", "data"]
+  }
+]
